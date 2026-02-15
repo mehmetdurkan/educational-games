@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Wizard - Synonyms & Antonyms</title>
+    <link rel="stylesheet" href="../../css/shared.css">
+    <style>
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .game-header {
+            margin-bottom: 30px;
+        }
+
+        .game-title {
+            font-size: 2.5em;
+            color: #667eea;
+            margin: 0 0 10px 0;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .question-type {
+            background: #ffd700;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .question-word {
+            font-size: 2.5em;
+            color: #333;
+            margin: 20px 0;
+            font-weight: bold;
+            text-decoration: underline;
+            text-decoration-color: #764ba2;
+            text-decoration-thickness: 3px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .option-btn {
+            padding: 20px;
+            font-size: 1.3em;
+            border: 3px solid #667eea;
+            background: white;
+            color: #333;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .option-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .option-btn.correct {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+            animation: bounce 0.5s ease;
+        }
+
+        .option-btn.incorrect {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+            animation: shake 0.5s ease;
+        }
+
+        .feedback-message {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            min-height: 40px;
+        }
+
+        .feedback-message.correct {
+            color: #4caf50;
+        }
+
+        .feedback-message.incorrect {
+            color: #f44336;
+        }
+
+        .level-complete-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .level-complete-screen.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .level-complete-title {
+            font-size: 3em;
+            color: #ffd700;
+            margin-bottom: 20px;
+            animation: bounce 1s ease infinite;
+        }
+
+        .level-complete-message {
+            font-size: 1.5em;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        .continue-btn {
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50 0%, #8bc34a 100%);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .streak-indicator {
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .streak-indicator.active {
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @media (max-width: 600px) {
+            .game-card {
+                padding: 20px;
+            }
+
+            .game-title {
+                font-size: 2em;
+            }
+
+            .question-word {
+                font-size: 2em;
+            }
+
+            .option-btn {
+                font-size: 1.1em;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-button">← Back to Games</a>
+
+    <div class="game-container">
+        <div class="game-card">
+            <div class="game-header">
+                <h1 class="game-title">✨ Word Wizard</h1>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-label">Level</div>
+                    <div id="level-display">1</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Score</div>
+                    <div id="score-display">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Streak</div>
+                    <div>
+                        <span id="streak-display">0</span>
+                        <span class="streak-indicator" id="streak-indicator"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="game-screen">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+
+                <div class="question-type" id="question-type">Find a SYNONYM for:</div>
+                <div class="question-word" id="question-word">happy</div>
+
+                <div class="options-grid" id="options-grid">
+                    <button class="option-btn" onclick="checkAnswer(0)">Option 1</button>
+                    <button class="option-btn" onclick="checkAnswer(1)">Option 2</button>
+                    <button class="option-btn" onclick="checkAnswer(2)">Option 3</button>
+                    <button class="option-btn" onclick="checkAnswer(3)">Option 4</button>
+                </div>
+
+                <div class="feedback-message" id="feedback-message"></div>
+            </div>
+
+            <div class="level-complete-screen" id="level-complete-screen">
+                <div class="level-complete-title">🎉 Level Complete! 🎉</div>
+                <div class="level-complete-message" id="level-complete-message"></div>
+                <button class="button-primary continue-btn" onclick="nextLevel()">Continue to Next Level</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let currentLevel = 1;
+        let score = 0;
+        let streak = 0;
+        let correctInLevel = 0;
+        let currentQuestion = null;
+        const QUESTIONS_PER_LEVEL = 5;
+
+        // Question bank organized by level
+        const questionBank = {
+            1: [ // Level 1 - Easy, common words
+                { type: 'synonym', word: 'happy', correct: 'glad', options: ['sad', 'glad', 'angry', 'tired'] },
+                { type: 'antonym', word: 'big', correct: 'small', options: ['huge', 'small', 'large', 'giant'] },
+                { type: 'synonym', word: 'fast', correct: 'quick', options: ['slow', 'quick', 'lazy', 'stop'] },
+                { type: 'antonym', word: 'hot', correct: 'cold', options: ['warm', 'cold', 'fire', 'boil'] },
+                { type: 'synonym', word: 'smart', correct: 'clever', options: ['dumb', 'clever', 'silly', 'lazy'] },
+                { type: 'antonym', word: 'good', correct: 'bad', options: ['great', 'bad', 'nice', 'best'] },
+                { type: 'synonym', word: 'little', correct: 'small', options: ['big', 'small', 'huge', 'tall'] },
+                { type: 'antonym', word: 'up', correct: 'down', options: ['high', 'down', 'top', 'sky'] }
+            ],
+            2: [ // Level 2 - Moderate
+                { type: 'synonym', word: 'brave', correct: 'fearless', options: ['scared', 'fearless', 'weak', 'shy'] },
+                { type: 'antonym', word: 'difficult', correct: 'easy', options: ['hard', 'easy', 'tough', 'tricky'] },
+                { type: 'synonym', word: 'begin', correct: 'start', options: ['end', 'start', 'stop', 'finish'] },
+                { type: 'antonym', word: 'ancient', correct: 'modern', options: ['old', 'modern', 'past', 'early'] },
+                { type: 'synonym', word: 'angry', correct: 'mad', options: ['happy', 'mad', 'calm', 'pleased'] },
+                { type: 'antonym', word: 'empty', correct: 'full', options: ['blank', 'full', 'bare', 'void'] },
+                { type: 'synonym', word: 'shout', correct: 'yell', options: ['whisper', 'yell', 'talk', 'sing'] },
+                { type: 'antonym', word: 'strong', correct: 'weak', options: ['mighty', 'weak', 'power', 'tough'] }
+            ],
+            3: [ // Level 3 - Intermediate
+                { type: 'synonym', word: 'afraid', correct: 'scared', options: ['brave', 'scared', 'bold', 'strong'] },
+                { type: 'antonym', word: 'rough', correct: 'smooth', options: ['bumpy', 'smooth', 'hard', 'tough'] },
+                { type: 'synonym', word: 'pretty', correct: 'beautiful', options: ['ugly', 'beautiful', 'plain', 'dull'] },
+                { type: 'antonym', word: 'polite', correct: 'rude', options: ['kind', 'rude', 'nice', 'gentle'] },
+                { type: 'synonym', word: 'enormous', correct: 'huge', options: ['tiny', 'huge', 'small', 'little'] },
+                { type: 'antonym', word: 'arrive', correct: 'depart', options: ['come', 'depart', 'enter', 'reach'] },
+                { type: 'synonym', word: 'tired', correct: 'sleepy', options: ['awake', 'sleepy', 'alert', 'active'] },
+                { type: 'antonym', word: 'wide', correct: 'narrow', options: ['broad', 'narrow', 'big', 'large'] }
+            ],
+            4: [ // Level 4 - Challenging
+                { type: 'synonym', word: 'discover', correct: 'find', options: ['lose', 'find', 'hide', 'cover'] },
+                { type: 'antonym', word: 'victory', correct: 'defeat', options: ['win', 'defeat', 'success', 'triumph'] },
+                { type: 'synonym', word: 'amazing', correct: 'wonderful', options: ['boring', 'wonderful', 'dull', 'plain'] },
+                { type: 'antonym', word: 'generous', correct: 'selfish', options: ['kind', 'selfish', 'giving', 'nice'] },
+                { type: 'synonym', word: 'quiet', correct: 'silent', options: ['loud', 'silent', 'noisy', 'talking'] },
+                { type: 'antonym', word: 'remember', correct: 'forget', options: ['recall', 'forget', 'think', 'know'] },
+                { type: 'synonym', word: 'repair', correct: 'fix', options: ['break', 'fix', 'damage', 'ruin'] },
+                { type: 'antonym', word: 'question', correct: 'answer', options: ['ask', 'answer', 'wonder', 'query'] }
+            ],
+            5: [ // Level 5 - Advanced
+                { type: 'synonym', word: 'appreciate', correct: 'value', options: ['ignore', 'value', 'dislike', 'hate'] },
+                { type: 'antonym', word: 'innocent', correct: 'guilty', options: ['pure', 'guilty', 'clean', 'good'] },
+                { type: 'synonym', word: 'genuine', correct: 'real', options: ['fake', 'real', 'false', 'pretend'] },
+                { type: 'antonym', word: 'ordinary', correct: 'special', options: ['normal', 'special', 'common', 'usual'] },
+                { type: 'synonym', word: 'terrible', correct: 'awful', options: ['great', 'awful', 'nice', 'good'] },
+                { type: 'antonym', word: 'include', correct: 'exclude', options: ['add', 'exclude', 'involve', 'contain'] },
+                { type: 'synonym', word: 'glisten', correct: 'sparkle', options: ['dull', 'sparkle', 'fade', 'dim'] },
+                { type: 'antonym', word: 'complex', correct: 'simple', options: ['hard', 'simple', 'difficult', 'tricky'] }
+            ]
+        };
+
+        // Encouraging messages
+        const correctMessages = [
+            "Excellent! ✨", "Perfect! 🌟", "Great job! 🎉",
+            "You're on fire! 🔥", "Fantastic! 💫", "Amazing! ⭐",
+            "Super! 🎊", "Brilliant! 💡", "Wonderful! 🎈"
+        ];
+
+        const streakMessages = [
+            "Streak bonus! 🔥", "Keep it going! 💪",
+            "You're unstoppable! 🚀", "Word Master! 👑"
+        ];
+
+        // Initialize game
+        function init() {
+            loadQuestion();
+        }
+
+        // Get random question from current level
+        function getRandomQuestion() {
+            const levelQuestions = questionBank[currentLevel];
+            const randomIndex = Math.floor(Math.random() * levelQuestions.length);
+            return levelQuestions[randomIndex];
+        }
+
+        // Load a new question
+        function loadQuestion() {
+            currentQuestion = getRandomQuestion();
+
+            // Shuffle options
+            const shuffledOptions = [...currentQuestion.options].sort(() => Math.random() - 0.5);
+            currentQuestion.shuffledOptions = shuffledOptions;
+            currentQuestion.correctIndex = shuffledOptions.indexOf(currentQuestion.correct);
+
+            // Update UI
+            const typeText = currentQuestion.type === 'synonym' ? 'SYNONYM' : 'ANTONYM';
+            document.getElementById('question-type').textContent = `Find a ${typeText} for:`;
+            document.getElementById('question-word').textContent = currentQuestion.word;
+
+            const optionButtons = document.querySelectorAll('.option-btn');
+            shuffledOptions.forEach((option, index) => {
+                optionButtons[index].textContent = option;
+                optionButtons[index].disabled = false;
+                optionButtons[index].classList.remove('correct', 'incorrect');
+            });
+
+            document.getElementById('feedback-message').textContent = '';
+            document.getElementById('feedback-message').className = 'feedback-message';
+
+            // Update progress bar
+            const progress = (correctInLevel / QUESTIONS_PER_LEVEL) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+        }
+
+        // Check answer
+        function checkAnswer(selectedIndex) {
+            const optionButtons = document.querySelectorAll('.option-btn');
+            const feedbackElement = document.getElementById('feedback-message');
+            const streakIndicator = document.getElementById('streak-indicator');
+
+            // Disable all buttons
+            optionButtons.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === currentQuestion.correctIndex) {
+                // Correct answer
+                optionButtons[selectedIndex].classList.add('correct');
+
+                // Update score and streak
+                score += 10;
+                streak++;
+                correctInLevel++;
+
+                // Streak bonus
+                let message = correctMessages[Math.floor(Math.random() * correctMessages.length)];
+                if (streak >= 5) {
+                    score += 5;
+                    message = streakMessages[Math.floor(Math.random() * streakMessages.length)];
+                    streakIndicator.textContent = '🔥';
+                    streakIndicator.classList.add('active');
+                } else {
+                    streakIndicator.textContent = streak >= 3 ? '🔥' : '';
+                }
+
+                feedbackElement.textContent = message;
+                feedbackElement.className = 'feedback-message correct';
+
+                updateDisplay();
+
+                // Check if level complete
+                if (correctInLevel >= QUESTIONS_PER_LEVEL) {
+                    setTimeout(showLevelComplete, 2000);
+                } else {
+                    setTimeout(loadQuestion, 2000);
+                }
+            } else {
+                // Incorrect answer
+                optionButtons[selectedIndex].classList.add('incorrect');
+                optionButtons[currentQuestion.correctIndex].classList.add('correct');
+
+                // Reset streak
+                streak = 0;
+                streakIndicator.textContent = '';
+
+                feedbackElement.textContent = `Not quite. The answer is "${currentQuestion.correct}"`;
+                feedbackElement.className = 'feedback-message incorrect';
+
+                updateDisplay();
+                setTimeout(loadQuestion, 3000);
+            }
+
+            setTimeout(() => {
+                streakIndicator.classList.remove('active');
+            }, 500);
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('level-display').textContent = currentLevel;
+            document.getElementById('score-display').textContent = score;
+            document.getElementById('streak-display').textContent = streak;
+        }
+
+        // Show level complete screen
+        function showLevelComplete() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('level-complete-screen').classList.add('show');
+
+            let message = `You completed Level ${currentLevel}!<br>`;
+            message += `Score: ${score} points`;
+            if (streak >= 5) {
+                message += `<br>Amazing ${streak}-question streak! 🔥`;
+            }
+
+            document.getElementById('level-complete-message').innerHTML = message;
+        }
+
+        // Next level
+        function nextLevel() {
+            if (currentLevel < 5) {
+                currentLevel++;
+                correctInLevel = 0;
+                document.getElementById('level-complete-screen').classList.remove('show');
+                document.getElementById('game-screen').style.display = 'block';
+                updateDisplay();
+                loadQuestion();
+            } else {
+                // Game complete!
+                const message = `<div class="level-complete-title">🏆 You Won! 🏆</div>
+                    <div class="level-complete-message">
+                        Congratulations, Word Wizard!<br>
+                        You've mastered all 5 levels!<br>
+                        Final Score: ${score} points<br><br>
+                        <button class="button-primary" onclick="location.reload()">Play Again</button>
+                    </div>`;
+                document.getElementById('level-complete-screen').innerHTML = message;
+            }
+        }
+
+        // Start the game
+        init();
+    </script>
+</body>
+</html>
