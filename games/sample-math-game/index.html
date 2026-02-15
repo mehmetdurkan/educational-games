@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Adventure 🔢</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            transform: scale(1.05);
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            margin-top: 80px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .score {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .question {
+            font-size: 3em;
+            color: #333;
+            margin: 30px 0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .answer-input {
+            font-size: 2em;
+            padding: 15px;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            width: 200px;
+            text-align: center;
+            margin: 20px 0;
+            font-family: inherit;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #f5576c;
+            box-shadow: 0 0 15px rgba(245, 87, 108, 0.3);
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .submit-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feedback {
+            font-size: 1.5em;
+            margin-top: 20px;
+            min-height: 40px;
+            font-weight: bold;
+        }
+
+        .correct {
+            color: #4caf50;
+            animation: bounce 0.5s ease;
+        }
+
+        .incorrect {
+            color: #f44336;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .new-game-button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .new-game-button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="goBack()">← Back to Games</button>
+
+    <div class="game-container">
+        <h1>🔢 Math Adventure</h1>
+        <div class="score">
+            Score: <span id="score">0</span> | 
+            Streak: <span id="streak">0</span> 🔥
+        </div>
+
+        <div class="question" id="question">Click "New Question" to start!</div>
+
+        <input type="number" id="answerInput" class="answer-input" placeholder="?" disabled>
+        
+        <div>
+            <button class="submit-button" id="submitButton" onclick="checkAnswer()" disabled>
+                Check Answer ✓
+            </button>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <button class="new-game-button" onclick="newQuestion()">New Question 🎲</button>
+    </div>
+
+    <script>
+        let score = 0;
+        let streak = 0;
+        let currentAnswer = 0;
+        let questionsAnswered = 0;
+
+        function goBack() {
+            window.location.href = '../../index.html';
+        }
+
+        function getRandomNumber(max = 20) {
+            return Math.floor(Math.random() * max) + 1;
+        }
+
+        function newQuestion() {
+            const num1 = getRandomNumber(20);
+            const num2 = getRandomNumber(20);
+            const operation = Math.random() > 0.5 ? '+' : '-';
+
+            let question, answer;
+
+            if (operation === '+') {
+                question = `${num1} + ${num2}`;
+                answer = num1 + num2;
+            } else {
+                // Make sure subtraction doesn't give negative numbers
+                const larger = Math.max(num1, num2);
+                const smaller = Math.min(num1, num2);
+                question = `${larger} - ${smaller}`;
+                answer = larger - smaller;
+            }
+
+            currentAnswer = answer;
+
+            document.getElementById('question').textContent = question + ' = ?';
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').disabled = false;
+            document.getElementById('submitButton').disabled = false;
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('answerInput').focus();
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('answerInput').value);
+            const feedback = document.getElementById('feedback');
+
+            if (isNaN(userAnswer)) {
+                feedback.textContent = 'Please enter a number!';
+                feedback.className = 'feedback incorrect';
+                return;
+            }
+
+            if (userAnswer === currentAnswer) {
+                score += 10;
+                streak++;
+                feedback.textContent = '🎉 Correct! Great job!';
+                feedback.className = 'feedback correct';
+                
+                // Bonus points for streaks
+                if (streak >= 5) {
+                    score += 5;
+                    feedback.textContent = '🔥 Amazing streak! +15 points!';
+                }
+            } else {
+                streak = 0;
+                feedback.textContent = `❌ Not quite. The answer was ${currentAnswer}`;
+                feedback.className = 'feedback incorrect';
+            }
+
+            questionsAnswered++;
+            updateScore();
+
+            document.getElementById('answerInput').disabled = true;
+            document.getElementById('submitButton').disabled = true;
+
+            // Auto-generate new question after 2 seconds
+            setTimeout(() => {
+                newQuestion();
+            }, 2000);
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+        }
+
+        // Allow Enter key to submit answer
+        document.getElementById('answerInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !this.disabled) {
+                checkAnswer();
+            }
+        });
+
+        // Initialize the game
+        newQuestion();
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+[
+  {
+    "id": "sample-math-game",
+    "name": "Math Adventure",
+    "description": "Practice addition and subtraction with fun animations!",
+    "icon": "🔢",
+    "path": "./games/sample-math-game/index.html"
+  }
+]

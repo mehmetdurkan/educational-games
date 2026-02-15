@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Educational Games 🎮</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: white;
+            font-size: 3em;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #fff;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .game-card:nth-child(1) { animation-delay: 0.1s; }
+        .game-card:nth-child(2) { animation-delay: 0.2s; }
+        .game-card:nth-child(3) { animation-delay: 0.3s; }
+        .game-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .game-card:hover {
+            transform: translateY(-10px) rotate(1deg);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .game-icon {
+            font-size: 4em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .game-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .game-description {
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .play-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .play-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .loading h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .error {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+            background: rgba(255, 0, 0, 0.2);
+            border-radius: 20px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Our Educational Games 🎨</h1>
+            <p class="subtitle">Learn while having fun!</p>
+        </header>
+
+        <div id="gameGrid" class="game-grid">
+            <div class="loading">
+                <h2>Loading games... 🎲</h2>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadGames() {
+            try {
+                const response = await fetch('./data/games-list.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load games list');
+                }
+                const games = await response.json();
+                renderGames(games);
+            } catch (error) {
+                console.error('Error loading games:', error);
+                document.getElementById('gameGrid').innerHTML = `
+                    <div class="error">
+                        <h2>Oops! 😅</h2>
+                        <p>Couldn't load the games list. Make sure games-list.json exists in the data folder.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderGames(games) {
+            const gameGrid = document.getElementById('gameGrid');
+            
+            if (games.length === 0) {
+                gameGrid.innerHTML = `
+                    <div class="loading">
+                        <h2>No games yet! 🎲</h2>
+                        <p>Add some games to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            gameGrid.innerHTML = games.map((game, index) => `
+                <div class="game-card" style="animation-delay: ${index * 0.1}s">
+                    <div class="game-icon">${game.icon}</div>
+                    <h3 class="game-title">${game.name}</h3>
+                    <p class="game-description">${game.description}</p>
+                    <button class="play-button" onclick="playGame('${game.path}')">
+                        Play Now! ▶
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function playGame(gamePath) {
+            // Navigate to the game page
+            window.location.href = gamePath;
+        }
+
+        // Load games on page load
+        loadGames();
+    </script>
+</body>
+</html>
