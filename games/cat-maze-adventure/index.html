@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Maze Adventure 🐱</title>
+    <link rel="stylesheet" href="../../css/shared.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            max-width: 620px;
+            width: 100%;
+            margin-top: 70px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .hud {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .hud span {
+            font-weight: bold;
+        }
+
+        canvas {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: none;
+        }
+
+        .overlay.visible {
+            display: flex;
+        }
+
+        .overlay p {
+            margin: 8px 0;
+        }
+
+        .overlay .small {
+            font-size: 0.6em;
+            opacity: 0.8;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dpad {
+            margin-top: 15px;
+            display: grid;
+            grid-template-areas:
+                ". up ."
+                "left down right";
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 50px);
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .dpad button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .dpad button:active {
+            transform: scale(0.9);
+        }
+
+        .dpad-up { grid-area: up; }
+        .dpad-down { grid-area: down; }
+        .dpad-left { grid-area: left; }
+        .dpad-right { grid-area: right; }
+    </style>
+</head>
+<body>
+    <button class="back-button" id="backButton">← Back to Games</button>
+
+    <div class="game-container">
+        <h1>🐱 Cat Maze Adventure</h1>
+        <div class="hud">
+            Level: <span id="levelDisplay">1</span> |
+            Score: <span id="scoreDisplay">0</span> |
+            Fish: <span id="fishDisplay">0/0</span>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="mazeCanvas" width="500" height="500"></canvas>
+            <div class="overlay" id="overlay">
+                <p id="overlayTitle"></p>
+                <p id="overlayMessage"></p>
+                <p class="small" id="overlayHint"></p>
+            </div>
+        </div>
+
+        <div class="dpad">
+            <button class="dpad-up" data-dir="up">⬆</button>
+            <button class="dpad-left" data-dir="left">⬅</button>
+            <button class="dpad-down" data-dir="down">⬇</button>
+            <button class="dpad-right" data-dir="right">➡</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
+        const overlayTitle = document.getElementById('overlayTitle');
+        const overlayMessage = document.getElementById('overlayMessage');
+        const overlayHint = document.getElementById('overlayHint');
+
+        // Game state
+        let level = 1;
+        let score = 0;
+        let state = 'start'; // start, playing, caught, levelComplete
+        let maze = [];
+        let rows, cols, cellSize;
+        let cat = { row: 0, col: 0 };
+        let friend = { row: 0, col: 0 };
+        let dogs = [];
+        let fishList = [];
+        let fishCollected = 0;
+        let totalFish = 0;
+        let dogInterval = null;
+
+        // --- Difficulty scaling ---
+        function getLevelConfig(lvl) {
+            const gridSize = Math.min(7 + (lvl - 1) * 2, 21);
+            const dogCount = Math.min(1 + Math.floor((lvl - 1) / 2), 5);
+            const fishCount = 4 + lvl;
+            const dogSpeed = Math.max(800 - (lvl - 1) * 50, 350);
+            return { gridSize, dogCount, fishCount, dogSpeed };
+        }
+
+        // --- Maze generation (recursive backtracker) ---
+        function generateMaze(r, c) {
+            const grid = [];
+            for (let i = 0; i < r; i++) {
+                grid[i] = [];
+                for (let j = 0; j < c; j++) {
+                    grid[i][j] = { walls: [true, true, true, true], visited: false };
+                    // walls: [top, right, bottom, left]
+                }
+            }
+
+            const stack = [];
+            const start = grid[0][0];
+            start.visited = true;
+            stack.push([0, 0]);
+
+            while (stack.length > 0) {
+                const [cr, cc] = stack[stack.length - 1];
+                const neighbors = [];
+
+                // top
+                if (cr > 0 && !grid[cr-1][cc].visited) neighbors.push([cr-1, cc, 0, 2]);
+                // right
+                if (cc < c-1 && !grid[cr][cc+1].visited) neighbors.push([cr, cc+1, 1, 3]);
+                // bottom
+                if (cr < r-1 && !grid[cr+1][cc].visited) neighbors.push([cr+1, cc, 2, 0]);
+                // left
+                if (cc > 0 && !grid[cr][cc-1].visited) neighbors.push([cr, cc-1, 3, 1]);
+
+                if (neighbors.length > 0) {
+                    const [nr, nc, wall, opposite] = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    grid[cr][cc].walls[wall] = false;
+                    grid[nr][nc].walls[opposite] = false;
+                    grid[nr][nc].visited = true;
+                    stack.push([nr, nc]);
+                } else {
+                    stack.pop();
+                }
+            }
+
+            return grid;
+        }
+
+        // --- Place entities ---
+        function placeFish(count) {
+            const positions = [];
+            const taken = new Set();
+            taken.add('0,0');
+            taken.add(`${rows-1},${cols-1}`);
+
+            while (positions.length < count) {
+                const r = Math.floor(Math.random() * rows);
+                const c = Math.floor(Math.random() * cols);
+                const key = `${r},${c}`;
+                if (!taken.has(key)) {
+                    taken.add(key);
+                    positions.push({ row: r, col: c });
+                }
+            }
+            return positions;
+        }
+
+        function placeDogs(count) {
+            const positions = [];
+            const taken = new Set();
+            taken.add('0,0');
+            taken.add(`${rows-1},${cols-1}`);
+            fishList.forEach(f => taken.add(`${f.row},${f.col}`));
+
+            // Place dogs in the far half of the maze
+            const minDist = Math.floor((rows + cols) / 3);
+            let attempts = 0;
+            while (positions.length < count && attempts < 500) {
+                const r = Math.floor(Math.random() * rows);
+                const c = Math.floor(Math.random() * cols);
+                const key = `${r},${c}`;
+                attempts++;
+                if (!taken.has(key) && (r + c) >= minDist) {
+                    taken.add(key);
+                    positions.push({ row: r, col: c });
+                }
+            }
+            return positions;
+        }
+
+        // --- Drawing ---
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Background
+            ctx.fillStyle = '#fef9e7';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw walls
+            ctx.strokeStyle = '#5b3a8c';
+            ctx.lineWidth = 2;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = c * cellSize;
+                    const y = r * cellSize;
+                    const cell = maze[r][c];
+
+                    if (cell.walls[0]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + cellSize, y); ctx.stroke(); }
+                    if (cell.walls[1]) { ctx.beginPath(); ctx.moveTo(x + cellSize, y); ctx.lineTo(x + cellSize, y + cellSize); ctx.stroke(); }
+                    if (cell.walls[2]) { ctx.beginPath(); ctx.moveTo(x, y + cellSize); ctx.lineTo(x + cellSize, y + cellSize); ctx.stroke(); }
+                    if (cell.walls[3]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + cellSize); ctx.stroke(); }
+                }
+            }
+
+            const emojiSize = Math.max(cellSize * 0.7, 12);
+            ctx.font = `${emojiSize}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Draw fish
+            fishList.forEach(f => {
+                ctx.fillText('🐟', f.col * cellSize + cellSize / 2, f.row * cellSize + cellSize / 2);
+            });
+
+            // Draw friend (exit)
+            ctx.fillText('😺', friend.col * cellSize + cellSize / 2, friend.row * cellSize + cellSize / 2);
+
+            // Draw dogs
+            dogs.forEach(d => {
+                ctx.fillText('🐶', d.col * cellSize + cellSize / 2, d.row * cellSize + cellSize / 2);
+            });
+
+            // Draw cat
+            ctx.fillText('🐱', cat.col * cellSize + cellSize / 2, cat.row * cellSize + cellSize / 2);
+        }
+
+        // --- Movement ---
+        function canMove(r, c, direction) {
+            const wallIndex = { up: 0, right: 1, down: 2, left: 3 };
+            return !maze[r][c].walls[wallIndex[direction]];
+        }
+
+        function moveCat(direction) {
+            if (state !== 'playing') return;
+
+            const deltas = { up: [-1,0], right: [0,1], down: [1,0], left: [0,-1] };
+            const [dr, dc] = deltas[direction];
+
+            if (canMove(cat.row, cat.col, direction)) {
+                cat.row += dr;
+                cat.col += dc;
+                checkCollisions();
+                draw();
+            }
+        }
+
+        function moveDogs() {
+            if (state !== 'playing') return;
+
+            dogs.forEach(dog => {
+                const directions = ['up', 'right', 'down', 'left'];
+                const deltas = { up: [-1,0], right: [0,1], down: [1,0], left: [0,-1] };
+                let bestDir = null;
+                let bestDist = Infinity;
+
+                directions.forEach(dir => {
+                    if (canMove(dog.row, dog.col, dir)) {
+                        const [dr, dc] = deltas[dir];
+                        const nr = dog.row + dr;
+                        const nc = dog.col + dc;
+                        const dist = Math.abs(nr - cat.row) + Math.abs(nc - cat.col);
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            bestDir = dir;
+                        }
+                    }
+                });
+
+                if (bestDir) {
+                    const [dr, dc] = deltas[bestDir];
+                    dog.row += dr;
+                    dog.col += dc;
+                }
+            });
+
+            checkCollisions();
+            draw();
+        }
+
+        // --- Collisions ---
+        function checkCollisions() {
+            // Fish pickup
+            fishList = fishList.filter(f => {
+                if (f.row === cat.row && f.col === cat.col) {
+                    fishCollected++;
+                    score += 10;
+                    updateHUD();
+                    return false;
+                }
+                return true;
+            });
+
+            // Dog catch
+            for (const dog of dogs) {
+                if (dog.row === cat.row && dog.col === cat.col) {
+                    state = 'caught';
+                    clearInterval(dogInterval);
+                    showOverlay('🐶 Oh no!', 'A dog caught you!', 'Press any key or tap to retry');
+                    return;
+                }
+            }
+
+            // Reached friend
+            if (cat.row === friend.row && cat.col === friend.col) {
+                state = 'levelComplete';
+                clearInterval(dogInterval);
+                const levelBonus = 50;
+                const allFishBonus = fishList.length === 0 ? totalFish * 5 : 0;
+                score += levelBonus + allFishBonus;
+                const bonusText = allFishBonus > 0 ? ` + ${allFishBonus} all-fish bonus!` : '';
+                updateHUD();
+                showOverlay('😺 Friends reunited!', `+${levelBonus} points${bonusText}`, 'Press any key or tap for next level');
+            }
+        }
+
+        // --- HUD ---
+        function updateHUD() {
+            document.getElementById('levelDisplay').textContent = level;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('fishDisplay').textContent = `${fishCollected}/${totalFish}`;
+        }
+
+        // --- Overlay ---
+        function showOverlay(title, message, hint) {
+            overlayTitle.textContent = title;
+            overlayMessage.textContent = message;
+            overlayHint.textContent = hint;
+            overlay.classList.add('visible');
+        }
+
+        function hideOverlay() {
+            overlay.classList.remove('visible');
+        }
+
+        // --- Level setup ---
+        function startLevel(lvl) {
+            const config = getLevelConfig(lvl);
+            rows = config.gridSize;
+            cols = config.gridSize;
+            cellSize = Math.floor(canvas.width / cols);
+
+            // Resize canvas to fit grid exactly
+            canvas.width = cols * cellSize;
+            canvas.height = rows * cellSize;
+
+            maze = generateMaze(rows, cols);
+
+            cat = { row: 0, col: 0 };
+            friend = { row: rows - 1, col: cols - 1 };
+
+            totalFish = Math.min(config.fishCount, Math.floor(rows * cols * 0.3));
+            fishCollected = 0;
+            fishList = placeFish(totalFish);
+            dogs = placeDogs(config.dogCount);
+
+            updateHUD();
+            hideOverlay();
+
+            state = 'start';
+            draw();
+            showOverlay(`Level ${lvl}`, `${config.dogCount} dog${config.dogCount > 1 ? 's' : ''} | ${totalFish} fish`, 'Press any key or tap to start!');
+        }
+
+        function beginPlaying() {
+            hideOverlay();
+            state = 'playing';
+
+            clearInterval(dogInterval);
+            const config = getLevelConfig(level);
+            dogInterval = setInterval(moveDogs, config.dogSpeed);
+            draw();
+        }
+
+        // --- Input handling ---
+        function handleAction() {
+            if (state === 'start') {
+                beginPlaying();
+            } else if (state === 'caught') {
+                startLevel(level); // retry same level
+            } else if (state === 'levelComplete') {
+                level++;
+                startLevel(level);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+            if (dirMap[e.key]) {
+                e.preventDefault();
+                moveCat(dirMap[e.key]);
+            } else if (state !== 'playing') {
+                handleAction();
+            }
+        });
+
+        overlay.addEventListener('click', handleAction);
+
+        // D-pad
+        document.querySelectorAll('.dpad button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dir = btn.dataset.dir;
+                if (state === 'playing') {
+                    moveCat(dir);
+                } else {
+                    handleAction();
+                }
+            });
+        });
+
+        document.getElementById('backButton').addEventListener('click', () => {
+            window.location.href = '../../index.html';
+        });
+
+        // --- Start ---
+        startLevel(1);
+    </script>
+</body>
+</html>

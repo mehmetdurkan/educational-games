@@ -5,5 +5,12 @@
     "description": "Practice addition and subtraction with fun animations!",
     "icon": "🔢",
     "path": "./games/sample-math-game/index.html"
+  },
+  {
+    "id": "cat-maze-adventure",
+    "name": "Cat Maze Adventure",
+    "description": "Guide an orange tabby through mazes, collect fish, and avoid dogs!",
+    "icon": "🐱",
+    "path": "./games/cat-maze-adventure/index.html"
   }
 ]
