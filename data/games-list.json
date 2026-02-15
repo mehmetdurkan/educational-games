@@ -12,5 +12,12 @@
     "description": "Guide an orange tabby through mazes, collect fish, and avoid dogs!",
     "icon": "🐱",
     "path": "./games/cat-maze-adventure/index.html"
+  },
+  {
+    "id": "word-wizard",
+    "name": "Word Wizard",
+    "description": "Learn synonyms and antonyms with progressive levels and streak bonuses!",
+    "icon": "✨",
+    "path": "./games/word-wizard/index.html"
   }
 ]
