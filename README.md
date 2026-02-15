@@ -7,6 +7,8 @@ A colorful, playful website to showcase and play educational games created for l
 ```
 educational-games-site/
 ├── index.html                    # Main gallery page
+├── css/
+│   └── shared.css               # Shared styles (reset, colors, buttons)
 ├── data/
 │   └── games-list.json          # List of all available games
 ├── games/
@@ -72,7 +74,7 @@ https://YOUR-USERNAME.github.io/educational-games/
    mkdir games/my-new-game
    ```
 
-2. Create your game's `index.html` in that folder
+2. Create your game's `index.html` in that folder (link `../../css/shared.css` for shared styles)
 
 3. Update `data/games-list.json` to add your game:
    ```json

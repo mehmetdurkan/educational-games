@@ -4,20 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Educational Games 🎮</title>
+    <link rel="stylesheet" href="./css/shared.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -82,11 +70,6 @@
             }
         }
 
-        .game-card:nth-child(1) { animation-delay: 0.1s; }
-        .game-card:nth-child(2) { animation-delay: 0.2s; }
-        .game-card:nth-child(3) { animation-delay: 0.3s; }
-        .game-card:nth-child(4) { animation-delay: 0.4s; }
-
         .game-card:hover {
             transform: translateY(-10px) rotate(1deg);
             box-shadow: 0 15px 40px rgba(0,0,0,0.3);
@@ -113,22 +96,8 @@
         }
 
         .play-button {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border: none;
             padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
             width: 100%;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
-        }
-
-        .play-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
         }
 
         .loading {
@@ -186,9 +155,15 @@
             }
         }
 
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
         function renderGames(games) {
             const gameGrid = document.getElementById('gameGrid');
-            
+
             if (games.length === 0) {
                 gameGrid.innerHTML = `
                     <div class="loading">
@@ -198,21 +173,24 @@
                 `;
                 return;
             }
-            
+
             gameGrid.innerHTML = games.map((game, index) => `
                 <div class="game-card" style="animation-delay: ${index * 0.1}s">
-                    <div class="game-icon">${game.icon}</div>
-                    <h3 class="game-title">${game.name}</h3>
-                    <p class="game-description">${game.description}</p>
-                    <button class="play-button" onclick="playGame('${game.path}')">
+                    <div class="game-icon">${escapeHTML(game.icon)}</div>
+                    <h3 class="game-title">${escapeHTML(game.name)}</h3>
+                    <p class="game-description">${escapeHTML(game.description)}</p>
+                    <button class="play-button btn-primary">
                         Play Now! ▶
                     </button>
                 </div>
             `).join('');
+
+            gameGrid.querySelectorAll('.play-button').forEach((btn, index) => {
+                btn.addEventListener('click', () => playGame(games[index].path));
+            });
         }
 
         function playGame(gamePath) {
-            // Navigate to the game page
             window.location.href = gamePath;
         }
 

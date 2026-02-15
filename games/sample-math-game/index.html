@@ -4,42 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math Adventure 🔢</title>
+    <link rel="stylesheet" href="../../css/shared.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-        }
-
-        .back-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: white;
-            color: #667eea;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 1em;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: transform 0.2s ease;
-            z-index: 100;
-        }
-
-        .back-button:hover {
-            transform: scale(1.05);
         }
 
         .game-container {
@@ -93,27 +63,8 @@
         }
 
         .submit-button {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border: none;
             padding: 15px 40px;
-            border-radius: 25px;
             font-size: 1.3em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
-        }
-
-        .submit-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
-        }
-
-        .submit-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
         }
 
         .feedback {
@@ -163,39 +114,40 @@
     </style>
 </head>
 <body>
-    <button class="back-button" onclick="goBack()">← Back to Games</button>
+    <button class="back-button" id="backButton">← Back to Games</button>
 
     <div class="game-container">
         <h1>🔢 Math Adventure</h1>
         <div class="score">
-            Score: <span id="score">0</span> | 
+            Score: <span id="score">0</span> |
             Streak: <span id="streak">0</span> 🔥
         </div>
 
         <div class="question" id="question">Click "New Question" to start!</div>
 
         <input type="number" id="answerInput" class="answer-input" placeholder="?" disabled>
-        
+
         <div>
-            <button class="submit-button" id="submitButton" onclick="checkAnswer()" disabled>
+            <button class="submit-button btn-primary" id="submitButton" disabled>
                 Check Answer ✓
             </button>
         </div>
 
         <div class="feedback" id="feedback"></div>
 
-        <button class="new-game-button" onclick="newQuestion()">New Question 🎲</button>
+        <button class="new-game-button" id="newQuestionButton">New Question 🎲</button>
     </div>
 
     <script>
         let score = 0;
         let streak = 0;
         let currentAnswer = 0;
-        let questionsAnswered = 0;
 
-        function goBack() {
+        document.getElementById('backButton').addEventListener('click', () => {
             window.location.href = '../../index.html';
-        }
+        });
+        document.getElementById('submitButton').addEventListener('click', checkAnswer);
+        document.getElementById('newQuestionButton').addEventListener('click', newQuestion);
 
         function getRandomNumber(max = 20) {
             return Math.floor(Math.random() * max) + 1;
@@ -256,7 +208,6 @@
                 feedback.className = 'feedback incorrect';
             }
 
-            questionsAnswered++;
             updateScore();
 
             document.getElementById('answerInput').disabled = true;
