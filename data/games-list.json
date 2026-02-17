@@ -19,5 +19,12 @@
     "description": "Learn synonyms and antonyms with progressive levels and streak bonuses!",
     "icon": "✨",
     "path": "./games/word-wizard/index.html"
+  },
+  {
+    "id": "multiplication-master",
+    "name": "Multiplication Master",
+    "description": "Master times tables with achievements, streaks, and visual progress tracking!",
+    "icon": "✖️",
+    "path": "./games/multiplication-master/index.html"
   }
 ]
