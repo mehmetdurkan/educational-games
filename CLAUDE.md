@@ -132,6 +132,18 @@ git push -u origin claude/add-new-game-ABC123
 gh pr create --title "Add [Game Name]" --body "Description"
 ```
 
+### After PR Merge (IMPORTANT!)
+**Always update local main branch after merging a PR to avoid conflicts:**
+```bash
+# Switch to main branch
+git checkout main
+
+# Pull latest changes from remote
+git pull origin main
+```
+
+This ensures the next feature branch starts from the latest code and prevents merge conflicts.
+
 ### Commit Message Style
 - Use clear, descriptive messages
 - Start with verb: "Add", "Update", "Fix", "Refactor"
