@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✖️ Multiplication Master 🏆</title>
+    <link rel="stylesheet" href="../../css/shared.css">
+    <style>
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+            background: linear-gradient(160deg, #87CEEB 0%, #B2EBF2 45%, #A5D6A7 100%);
+            min-height: 100vh;
+            padding: 12px 10px;
+            margin: 0;
+        }
+
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        @keyframes sP {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes cFall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(105vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes bPop {
+            0% {
+                transform: scale(0) rotate(-10deg);
+                opacity: 0;
+            }
+            35% {
+                transform: scale(1.15) rotate(2deg);
+                opacity: 1;
+            }
+            70% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .confetti-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1500;
+            overflow: hidden;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            top: -12px;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            animation-name: cFall;
+            animation-fill-mode: forwards;
+        }
+
+        .badge-popup {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .badge-content {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            padding: 32px 48px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+            animation: bPop 2.4s ease-out forwards;
+        }
+
+        .progress-cell:hover {
+            transform: scale(1.25);
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" id="backButton">← Back to Games</button>
+
+    <div id="confetti" class="confetti-container" style="display: none;"></div>
+    <div id="badgePopup" style="display: none;"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="card">
+            <h1 style="color: #2E7D32; font-size: 26px; text-align: center; margin-bottom: 14px; letter-spacing: 1px;">
+                ✖️ Multiplication Master 🏆
+            </h1>
+
+            <!-- Difficulty -->
+            <div style="text-align: center; margin-bottom: 12px;">
+                <label style="font-weight: bold; margin-right: 8px; color: #444;">Level:</label>
+                <select id="difficulty" style="padding: 8px 14px; font-size: 15px; border: 2px solid #4CAF50; border-radius: 8px; font-family: inherit; cursor: pointer; background: white;">
+                    <option value="mixed">🌀 Mixed (All)</option>
+                    <option value="easy">🟢 Easy (2s, 5s, 10s)</option>
+                    <option value="medium">🟡 Medium (3s, 4s, 6s, 8s)</option>
+                    <option value="hard">🔴 Hard (7s, 9s)</option>
+                    <option value="custom">⚙️ Custom...</option>
+                </select>
+            </div>
+
+            <!-- Custom Tables Selection -->
+            <div id="customTables" style="background: #F1F8E9; padding: 12px; border-radius: 10px; margin-bottom: 12px; display: none;">
+                <div style="font-weight: bold; text-align: center; margin-bottom: 8px; color: #33691E;">Pick your tables:</div>
+                <div id="customTablesGrid" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;"></div>
+            </div>
+
+            <!-- Stats -->
+            <div style="display: flex; justify-content: space-around; font-size: 16px; margin-bottom: 12px; padding: 8px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
+                <span>✅ Correct: <strong id="totalCorrect">0</strong></span>
+                <span>🏆 Mastered: <strong id="masteredCount">0/81</strong></span>
+            </div>
+
+            <!-- Streak -->
+            <div id="streakDisplay" style="padding: 10px 14px; border-radius: 12px; text-align: center; font-weight: bold; font-size: 17px; background: linear-gradient(135deg, #FFD700, #FFC107); color: #4E342E;">
+                Start your streak! 🌟
+            </div>
+        </div>
+
+        <!-- Quiz -->
+        <div class="card" style="text-align: center;">
+            <div id="question" style="font-size: 40px; font-weight: bold; color: #1B5E20; margin-bottom: 22px; letter-spacing: 2px;">
+                Loading…
+            </div>
+            <input
+                id="answerInput"
+                type="number"
+                placeholder="?"
+                style="font-size: 30px; padding: 10px 14px; width: 110px; text-align: center; border: 3px solid #4CAF50; border-radius: 12px; margin-bottom: 16px; font-family: inherit; outline: none;"
+            />
+            <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                <button id="submitBtn" style="background: linear-gradient(135deg, #4CAF50, #66BB6A); color: white; border: none; padding: 14px 38px; font-size: 20px; border-radius: 12px; cursor: pointer; font-family: inherit; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4); transition: all 0.2s;">
+                    Check Answer ✅
+                </button>
+                <button id="dontKnowBtn" style="background: linear-gradient(135deg, #FF9800, #FFA726); color: white; border: none; padding: 12px 24px; font-size: 18px; border-radius: 12px; cursor: pointer; font-family: inherit; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.4); transition: all 0.2s;">
+                    I don't know 🤔
+                </button>
+            </div>
+            <div id="feedback" style="margin-top: 16px; font-size: 18px; font-weight: bold; white-space: pre-line; padding: 12px 16px; border-radius: 10px; display: none;"></div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="card">
+            <h2 style="color: #2E7D32; text-align: center; margin-bottom: 16px; font-size: 22px;">🏆 Achievements</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+                <div>
+                    <h3 style="text-align: center; margin-bottom: 10px; font-size: 14px; color: #555;">📊 Times Tables</h3>
+                    <div id="tablesBadges"></div>
+                </div>
+                <div>
+                    <h3 style="text-align: center; margin-bottom: 10px; font-size: 14px; color: #555;">🔥 Streaks</h3>
+                    <div id="streaksBadges"></div>
+                    <h3 style="text-align: center; margin: 16px 0 10px; font-size: 14px; color: #555;">⭐ Totals</h3>
+                    <div id="totalsBadges"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Grid -->
+        <div class="card">
+            <h2 style="color: #2E7D32; text-align: center; margin-bottom: 10px; font-size: 20px;">📈 My Multiplication Progress</h2>
+            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; font-size: 12px;">
+                <span style="display: flex; align-items: center; gap: 5px;">
+                    <span style="width: 13px; height: 13px; border-radius: 3px; background: #E0E0E0; border: 2px solid #BDBDBD; display: inline-block;"></span>
+                    Not Practiced
+                </span>
+                <span style="display: flex; align-items: center; gap: 5px;">
+                    <span style="width: 13px; height: 13px; border-radius: 3px; background: #FFF9C4; border: 2px solid #FBC02D; display: inline-block;"></span>
+                    Learning
+                </span>
+                <span style="display: flex; align-items: center; gap: 5px;">
+                    <span style="width: 13px; height: 13px; border-radius: 3px; background: #FFCDD2; border: 2px solid #E53935; display: inline-block;"></span>
+                    Needs Practice
+                </span>
+                <span style="display: flex; align-items: center; gap: 5px;">
+                    <span style="width: 13px; height: 13px; border-radius: 3px; background: #C8E6C9; border: 2px solid #43A047; display: inline-block;"></span>
+                    Mastered!
+                </span>
+            </div>
+            <div style="overflow-x: auto;">
+                <div id="progressGrid" style="display: grid; grid-template-columns: 28px repeat(9, 1fr); gap: 3px; min-width: 265px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        document.getElementById('backButton').addEventListener('click', () => {
+            window.location.href = '../../index.html';
+        });
+    </script>
+</body>
+</html>
