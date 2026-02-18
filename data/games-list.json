@@ -19,5 +19,12 @@
     "description": "Learn synonyms and antonyms with progressive levels and streak bonuses!",
     "icon": "✨",
     "path": "./games/word-wizard/index.html"
+  },
+  {
+    "id": "geometry-quest",
+    "name": "Shape Master",
+    "description": "Master geometry with shapes, perimeter, and area! Three difficulty levels for 3rd graders.",
+    "icon": "📐",
+    "path": "./games/geometry-quest/index.html"
   }
 ]
