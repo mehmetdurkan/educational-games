@@ -26,5 +26,12 @@
     "description": "Master times tables with achievements, streaks, and visual progress tracking!",
     "icon": "✖️",
     "path": "./games/multiplication-master/index.html"
+  },
+  {
+    "id": "geometry-quest",
+    "name": "Shape Master",
+    "description": "Master geometry with shapes, perimeter, and area! Three difficulty levels for 3rd graders.",
+    "icon": "📐",
+    "path": "./games/geometry-quest/index.html"
   }
 ]
